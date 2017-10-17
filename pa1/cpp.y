@@ -2,19 +2,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "expr.h"
+
+#include "AST.h"
 #include "print.h"
 %}
 
 %union {
-	struct EXPR *ptr_expr;
-	struct ADDITIVE *ptr_addi;
-	struct MULTIPLICATIVE *ptr_multi;
-	int intnum;
-	float floatnum;
+	struct	EXPR 		*ptr_expr;
+	struct	ADDITIVE 	*ptr_addi;
+	struct	MULTIPLICATIVE 	*ptr_multi;
+
+	int			intnum;
+	float			floatnum;
+	char*			id;
 }
 
-%token <intnum>INTNUM <floatnum>FLOATNUM
+%token <intnum>INTNUM <floatnum>FLOATNUM <id>ID
 %left '*' '/'
 %left '+' '-'
 
