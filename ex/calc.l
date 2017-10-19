@@ -10,6 +10,5 @@ NUMBER [0-9]+
 "+"		{ return PLUS; }
 "*"		{ return MULT; }
 "\n"		{ return EOL; }
-. 		{ yyerror("unexpected char"); }
 %%
 

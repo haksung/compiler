@@ -1,4 +1,4 @@
-int set_zero_i (int num[4])
+int set_zero_i (int num[4], int asd)
 {
 	int i;
 

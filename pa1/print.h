@@ -1,9 +1,15 @@
 #ifndef PRINT_H
 #define PRINT_H
 
-#include "expr.h"
+#include "AST.h"
 
-struct EXPR *head;
+struct Program *head;
+
+struct table {
+	char	*loc;
+
+	
+};
 
 void dfs (void);
 void Addi (struct ADDITIVE *);
