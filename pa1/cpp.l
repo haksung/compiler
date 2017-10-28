@@ -13,12 +13,12 @@ id		[A-Za-z_][A-Za-z0-9_]*
 
 %%
 
-">"		{ return yytext[0]; }
-"<"		{ return yytext[0]; }
-">="		{ return *yytext; }
-"<="		{ return *yytext; }
-"=="		{ return *yytext; }
-"!="		{ return *yytext; }
+">"		{ return OP_GT; }
+"<"		{ return OP_LT; }
+">="		{ return OP_GE; }
+"<="		{ return OP_LE; }
+"=="		{ return OP_EQ; }
+"!="		{ return OP_NE; }
 "="		{ return yytext[0]; }
 "("		{ return yytext[0]; }
 ")"		{ return yytext[0]; }
@@ -58,7 +58,7 @@ id		[A-Za-z_][A-Za-z0-9_]*
 }
 
 {id} {
-	yylval.id = strdup(yytext):
+	yylval.id = strdup(yytext);
 	return ID;
 }
 

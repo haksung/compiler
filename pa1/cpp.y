@@ -48,13 +48,14 @@
 }
 
 %token <intnum>INTNUM <floatnum>FLOATNUM <id>ID
+%token OP_LE OP_GE OP_GT OP_LT OP_EQ OP_NE
 
 %right	'='
-%left	'==' '!='
-%left	'>' '<' '<=' '>='
+%left	OP_EQ OP_NE
+%left	OP_LE OP_GE OP_GT OP_LT
 %left	'+' '-'
 %left	'*' '/'
-%left	'-'
+%right	OP_UN
 %left	'(' ')'
 
 %nonassoc IF_THEN
@@ -106,7 +107,7 @@ Program :	  MainFunc {
 			struct Program *program = (struct Program *)malloc(sizeof(struct Program));
 			program->_class = NULL;
 			program->classMethodDef = NULL;
-			program-> = $1;
+			program->mainFunc = $1;
 			head = program;
 			$$ = program;			
 		}	
@@ -114,23 +115,23 @@ Program :	  MainFunc {
 			struct Program *program = (struct Program *)malloc(sizeof(struct Program));
 			program->_class = $1;
 			program->classMethodDef = NULL;
-			program-> = $2;
+			program->mainFunc = $2;
 			head = program;
 			$$ = program;
 		}
-		| ClassMethod MainFunc {
+		| ClassMethodDef MainFunc {
 			struct Program *program = (struct Program *)malloc(sizeof(struct Program));
 			program->_class = NULL;
 			program->classMethodDef = $1;
-			program-> = $2;
+			program->mainFunc = $2;
 			head = program;
 			$$ = program;
 		}	
-		| Class ClassMethod MainFunc {
+		| Class ClassMethodDef MainFunc {
 			struct Program *program = (struct Program *)malloc(sizeof(struct Program));
 			program->_class = $1;
 			program->classMethodDef = $2;
-			program-> = $3;
+			program->mainFunc = $3;
 			head = program;
 			$$ = program;
 		}
@@ -206,49 +207,49 @@ Member:		  /* empty string */
 		| VarDecl {
 			struct Member *member = (struct Member *)malloc(sizeof(struct Member));
 			member->varDecl = $1;
-			member->MethodDecl = NULL;
+			member->methodDecl = NULL;
 			member->methodDef = NULL;
 			$$ = member;
 		}
 		| MethodDecl {
 			struct Member *member = (struct Member *)malloc(sizeof(struct Member));
 			member->varDecl = NULL;
-			member->MethodDecl = $1;
+			member->methodDecl = $1;
 			member->methodDef = NULL;
 			$$ = member;
 		}
 		| MethodDef {
 			struct Member *member = (struct Member *)malloc(sizeof(struct Member));
 			member->varDecl = NULL;
-			member->MethodDecl = NULL;
+			member->methodDecl = NULL;
 			member->methodDef = $1;
 			$$ = member;
 		}
 		| VarDecl MethodDecl {
 			struct Member *member = (struct Member *)malloc(sizeof(struct Member));
 			member->varDecl = $1;
-			member->MethodDecl = $2;
+			member->methodDecl = $2;
 			member->methodDef = NULL;
 			$$ = member;
 		}
 		| VarDecl MethodDef {
 			struct Member *member = (struct Member *)malloc(sizeof(struct Member));
 			member->varDecl = $1;
-			member->MethodDecl = NULL;
+			member->methodDecl = NULL;
 			member->methodDef = $2;
 			$$ = member;
 		}
 		| MethodDecl MethodDef {
 			struct Member *member = (struct Member *)malloc(sizeof(struct Member));
 			member->varDecl = NULL;
-			member->MethodDecl = $1;
+			member->methodDecl = $1;
 			member->methodDef = $2;
 			$$ = member;
 		}
 		| VarDecl MethodDecl MethodDef {
 			struct Member *member = (struct Member *)malloc(sizeof(struct Member));
 			member->varDecl = $1;
-			member->MethodDecl = $2;
+			member->methodDecl = $2;
 			member->methodDef = $3;
 			$$ = member;
 		}
@@ -432,15 +433,15 @@ MainFunc :	'int' 'main' '(' ')' CompoundStmt {
 Param : 	  Type Ident {
 			struct Param *param = (struct Param *)malloc(sizeof(struct Param));
 			param->type = $1;
-			param->id = $2;
+			param->ident = $2;
 			param->prev = NULL;
 			$$ = param;
 		}
 		| Param ',' Type Ident {
 			struct Param *param = (struct Param *)malloc(sizeof(struct Param));
 			param->type = $3;
-			param->id = $4;
-			param->prev = 1;
+			param->ident = $4;
+			param->prev = $1;
 			$$ = param;
 		}
 		;
@@ -806,13 +807,13 @@ RefCallExpr : 	  CallExpr {
 		}
 		;
 
-IdentExpr : 	  id {
+IdentExpr : 	  ID {
 			struct IdentExpr *identexpr = (struct IdentExpr *)malloc(sizeof(struct IdentExpr));
 			identexpr->id = $1;
 			identexpr->expr = NULL;
 			$$ = identexpr;
 		}
-		| id '[' Expr ']' {
+		| ID '[' Expr ']' {
 			struct IdentExpr *identexpr = (struct IdentExpr *)malloc(sizeof(struct IdentExpr));
 			identexpr->id = $1;
 			identexpr->expr = $3;
@@ -820,13 +821,13 @@ IdentExpr : 	  id {
 		}
 		;
 
-CallExpr :	  id '(' ')' {
+CallExpr :	  ID '(' ')' {
 			struct CallExpr *callexpr = (struct CallExpr *)malloc(sizeof(struct CallExpr));
 			callexpr->id = $1;
 			callexpr->arg = NULL;
 			$$ = callexpr;
 		}
-		| id '(' Arg ')' {
+		| ID '(' Arg ')' {
 			struct CallExpr *callexpr = (struct CallExpr *)malloc(sizeof(struct CallExpr));
 			callexpr->id = $1;
 			callexpr->arg = $3;
@@ -842,16 +843,16 @@ Arg :		  Expr {
 		}		
 		| Arg ',' Expr {
 			struct Arg *arg = (struct Arg *)malloc(sizeof(struct Arg));
-			arg->expr = $1;
-			arg->prev = $3;
+			arg->expr = $3;
+			arg->prev = $1;
 			$$ = arg;
 		}
 		;
 
-UnOp :		'-' Expr {
+UnOp :		'-' OP_UN Expr {
 			struct UnOp *unop = (struct UnOp *)malloc(sizeof(struct UnOp));
 			unop->e = eNegative;
-			unop->expr = $2;
+			unop->expr = $3;
 			$$ = unop;
 		}
 		;
@@ -888,28 +889,28 @@ MultOp : 	  Expr '*' Expr {
 		}
 		;
 
-RelaOp :	  Expr '<' Expr {
+RelaOp :	  Expr OP_LT Expr {
 			struct RelaOp *relaop = (struct RelaOp *)malloc(sizeof(struct RelaOp));
 			relaop->e = eLT;
 			relaop->lhs = $1;
 			relaop->rhs = $3;
 			$$ = relaop;
 		}
-		| Expr '>' Expr {
+		| Expr OP_GT Expr {
 			struct RelaOp *relaop = (struct RelaOp *)malloc(sizeof(struct RelaOp));
 			relaop->e = eGT;
 			relaop->lhs = $1;
 			relaop->rhs = $3;
 			$$ = relaop;
 		}
-		| Expr '<=' Expr {
+		| Expr OP_LE Expr {
 			struct RelaOp *relaop = (struct RelaOp *)malloc(sizeof(struct RelaOp));
 			relaop->e = eLE;
 			relaop->lhs = $1;
 			relaop->rhs = $3;
 			$$ = relaop;
 		}
-		| Expr '>=' Expr {
+		| Expr OP_GE Expr {
 			struct RelaOp *relaop = (struct RelaOp *)malloc(sizeof(struct RelaOp));
 			relaop->e = eGE;
 			relaop->lhs = $1;
@@ -918,16 +919,16 @@ RelaOp :	  Expr '<' Expr {
 		}
 		;
 
-EqltOp :	  Expr '==' Expr {
+EqltOp :	  Expr OP_EQ Expr {
 			struct EqltOp *eqltop = (struct EqltOp *)malloc(sizeof(struct EqltOp));
 			eqltop->e = eEQ;
 			eqltop->lhs = $1;
 			eqltop->rhs = $3;
 			$$ = eqltop;
 		}
-		| Expr '!=' Expr {
+		| Expr OP_NE Expr {
 			struct EqltOp *eqltop = (struct EqltOp *)malloc(sizeof(struct EqltOp));
-			eqltop->e = eEQ;
+			eqltop->e = eNE;
 			eqltop->lhs = $1;
 			eqltop->rhs = $3;
 			$$ = eqltop;

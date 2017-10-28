@@ -96,7 +96,8 @@ struct VarDecl {
 	Assign_e assignType;
 	union {
 		int intnum;
-		int floatnum;
+		// Haksung, Int -> Float으로 변경.
+		float floatnum;
 	} assigner;
 	struct VarDecl *prev;
 };
