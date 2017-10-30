@@ -1,1 +1,8 @@
-https://nosyu.pe.kr/2005
+사용법 : make clean -> make -> ./mini_cpp < test/<input file name> -> ast.txt, s_table.txt 확인 하시면 됩니다.
+
+
+for( expr; expr; expr;) 이어서, for(i=0;i<10;i=i+1) 형태로 사용하지 못하는데..
+
+바꿀까 고민하다가.. 그냥 pdf대로 문법 제출합니다.
+
+for( assign; expr; assign) 이런 식으로 바꾸면 해결은 가능할 것 같네요.

@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "AST.h"
 #include "print.h"
 
@@ -13,12 +15,214 @@ void print_tab(int n) {
 	return;
 }
 
+// about Symbol table
+// global variable
+int type;
+int arr;
+int role;
+int stmt;
+int io;
+int location[50];
+
+void add_info(int type, char *name, int arr, int role, int stmt, int io) {
+        struct table *temp;
+        struct table *new = (struct table *)malloc(sizeof(struct table));
+
+	new->type = type;
+	new->name = strdup(name);
+	new->arr = arr;
+	new->role = role;
+	new->stmt = stmt;
+	new->io = io;	
+
+        if(t == NULL) {
+                t = new;
+                return;
+        }
+
+        temp = t;
+        while(1) {
+                if(temp->next == NULL) {
+                        temp->next = new;
+                        break;
+                }
+                temp = temp->next;
+        }
+	return;
+}
+
+void print_table() {
+	int i, j, aaa=0;
+	int order=0, count=0, print=0, stair=-1;
+	int while_num[50];
+	int do_num[50];
+	int for_num[50];
+	int if_num[50];
+	int compound_num[50];
+	int while_count=0, do_count=0, for_count=0;
+	int if_count=0, compound_count=0;
+	char *temp;
+
+	for(i=0;i<50;i++)
+		while_num[i]=0;
+	for(i=0;i<50;i++)
+		do_num[i]=0;
+	for(i=0;i<50;i++)
+		for_num[i]=0;
+	for(i=0;i<50;i++)
+		if_num[i]=0;
+	for(i=0;i<50;i++)
+		compound_num[i]=0;
+
+	while(1) {
+		if(t == NULL)
+			break;
+
+		if(t->io == 1) {
+			count = 0;
+			print = 0;
+    			if(t->stmt == 1 || t->stmt == 2) {
+				temp = strdup(t->name);
+			}
+
+			if(t->stmt == 3) {
+				stair++;
+				location[order] = 3;
+				while_num[stair]++;
+				order++;
+			}
+
+			if(t->stmt == 4) {
+				stair++;
+				location[order] = 4;
+				for_num[stair]++;
+				order++;
+			}
+
+			if(t->stmt == 5) {
+				stair++;
+				location[order] = 5;
+				if_num[stair]++;
+				order++;
+			}
+
+			if(t->stmt == 6) {
+				stair++;
+				location[order] = 6;
+				compound_num[stair]++;
+				order++;
+			}
+
+			if(t->stmt == 7) {
+				stair++;
+				location[order] = 7;
+				do_num[stair]++;
+				order++;
+			}
+		}
+
+		if(t->role == 1 || t->role == 2) {
+			if(print == 0) {
+				print = 1;
+
+				if(aaa != 0)
+					fprintf(table, "\n");
+				aaa = 1;
+
+				fprintf(table, "Location : %s ",temp);
+
+				for(i=0; location[i] != 0 ;i++) {
+					if(location[i] == 3)
+						fprintf(table, "- While(%d) ", while_num[i]);
+					if(location[i] == 4)
+						fprintf(table, "- For(%d) ", for_num[i]);
+					if(location[i] == 5)
+						fprintf(table, "- If(%d) ", if_num[i]);
+					if(location[i] == 6)
+						fprintf(table, "- Compound(%d)", compound_num[i]);
+					if(location[i] == 7)
+						fprintf(table, "- Do(%d)", do_num[i]);
+				}
+				fprintf(table, "\n");
+				
+				fprintf(table, "%10s", "Count");
+				fprintf(table, "%10s", "Type");
+				fprintf(table, "%10s", "Name");
+				fprintf(table, "%10s", "Array");
+				fprintf(table, "%10s", "Role");
+				fprintf(table, "\n");
+			}
+			
+			count++;
+			fprintf(table, "%10d", count);
+
+			if(t->type == 1)
+				fprintf(table, "%10s", "int");
+			if(t->type == 2)
+				fprintf(table, "%10s", "float");
+			if(t->type == 3)
+				fprintf(table, "%10s", "float");
+
+			fprintf(table, "%10s", t->name);
+
+			if(t->arr == 0)
+				fprintf(table, "         -");
+			else if(t->arr > 0)
+				fprintf(table, "%10d", t->arr);
+
+			if(t->role == 1)
+				fprintf(table, "%10s", "parameter");
+			else if(t->role == 2)
+				fprintf(table, "%10s", "variable");
+
+			fprintf(table, "\n");
+		}
+
+		if(t->io == 2) {
+			count = 0;
+
+			if(t->stmt == 1 || t->stmt == 2) {
+				for(i=0; i<50; i++)
+					location[i] = 0;
+
+				stair = -1;
+				order = 0;
+				while_count = 0;
+				for_count = 0;
+				if_count = 0;
+				compound_count = 0;
+				do_count = 0;
+
+				for(i=0; i<50; i++)
+					while_num[i] = 0;
+				for(i=0; i<50; i++)
+					for_num[i] = 0;
+				for(i=0; i<50; i++)
+					if_num[i] = 0;
+				for(i=0; i<50; i++)
+					compound_num[i] = 0;
+				for(i=0; i<50; i++)
+					do_num[i] = 0;
+			}
+			else {
+				stair--;
+				order--;
+				location[order] = 0;
+			}
+		}
+
+		t = t->next;
+	}
+}
+
 int main () {
 	ast = fopen("ast.txt", "w");
 	table = fopen("s_table.txt", "w");
 
-	if (!yyparse()) 
+	if (!yyparse()) { 
 		dfs();
+		print_table();
+	}
 	
 	fprintf(ast, "\n");
 	fprintf(table, "\n");
@@ -28,6 +232,7 @@ int main () {
 	return 0;
 }
 
+// about AST
 void dfs () {
 	if (head == NULL) {
 		fprintf (stderr, "program does not exist.\n");
@@ -48,6 +253,13 @@ void dfs () {
 void Class(struct Class *class) {
 	if(class->prev != NULL)
 		Class(class->prev);
+	
+	type = -1;
+	arr = -1;
+	role = -1;
+	stmt = 1;
+	io = 1;	
+	add_info(type, class->id, arr, role, stmt, io);
 
 	fprintf(ast, "class %s {\n", class->id);
 
@@ -60,7 +272,14 @@ void Class(struct Class *class) {
 		fprintf(ast, "\tpublic :\n");
 		Member(class->pubMember);
 	}
-	tab = tab - 2;
+	tab = tab - 2;	
+
+	type = -1;
+	arr = -1;
+	role = -1;
+	stmt = 1;
+	io = 2;	
+	add_info(type, class->id, arr, role, stmt, io);
 
 	fprintf(ast, "}\n\n");
 	return;
@@ -83,6 +302,7 @@ void VarDecl(struct VarDecl *varDecl) {
 		VarDecl(varDecl->prev);
 
 	if(varDecl->type != NULL && varDecl->ident != NULL) {
+		role = 2;
 		print_tab(tab);
 		Type(varDecl->type);
 		Ident(varDecl->ident);
@@ -96,6 +316,7 @@ void VarDecl(struct VarDecl *varDecl) {
 	return;
 }
 
+// Do not make symbol table, in MethodDecl
 void MethodDecl(struct MethodDecl *methodDecl) {
 	if(methodDecl->prev != NULL)
 		MethodDecl(methodDecl->prev);
@@ -114,9 +335,16 @@ void MethodDecl(struct MethodDecl *methodDecl) {
 
 void MethodDef(struct MethodDef *methodDef) {
 	if(methodDef->prev != NULL)
-		MethodDef(methodDef->prev);
+		MethodDef(methodDef->prev);	
 
 	if(methodDef->type != NULL) {
+		type = -1;
+		arr = -1;
+		role = -1;
+		stmt = 2;
+		io = 1;	
+		add_info(type, methodDef->id, arr, role, stmt, io);
+
 		print_tab(tab);
 		Type(methodDef->type);
 		fprintf(ast, "%s ( ", methodDef->id);
@@ -126,6 +354,13 @@ void MethodDef(struct MethodDef *methodDef) {
 		if(methodDef->compoundStmt != NULL)
 			CompoundStmt(methodDef->compoundStmt);
 		fprintf(ast, "\n");
+	
+		type = -1;
+		arr = -1;
+		role = -1;
+		stmt = 2;
+		io = 2;	
+		add_info(type, methodDef->id, arr, role, stmt, io);
 	}
 	
 	return;
@@ -136,6 +371,17 @@ void ClassMethodDef(struct ClassMethodDef *classMethodDef) {
 		ClassMethodDef(classMethodDef->prev);
 
 	if(classMethodDef->type != NULL) {
+
+		type = -1;
+		arr = -1;
+		role = -1;
+		stmt = 1;
+		io = 1;	
+		add_info(type, classMethodDef->className, arr, role, stmt, io);
+		
+		stmt = 2;
+		add_info(type, classMethodDef->methodName, arr, role, stmt, io);
+
 		Type(classMethodDef->type);
 		fprintf(ast, "%s :: %s ( ", classMethodDef->className, classMethodDef->methodName);
 		if(classMethodDef->param != NULL)
@@ -144,6 +390,16 @@ void ClassMethodDef(struct ClassMethodDef *classMethodDef) {
 		if(classMethodDef->compoundStmt != NULL)
 			CompoundStmt(classMethodDef->compoundStmt);
 		fprintf(ast, "\n");
+
+		type = -1;
+		arr = -1;
+		role = -1;
+		stmt = 2;
+		io = 2;
+		add_info(type, classMethodDef->methodName, arr, role, stmt, io);
+
+		stmt = 1;
+		add_info(type, classMethodDef->className, arr, role, stmt, io);
 	}
 	
 	return;
@@ -151,8 +407,23 @@ void ClassMethodDef(struct ClassMethodDef *classMethodDef) {
 
 void MainFunc(struct MainFunc *mainFunc) {
 	fprintf(ast, "int main ( ) ");
-	if(mainFunc->compoundStmt != NULL)
+	if(mainFunc->compoundStmt != NULL) {
+		type = -1;
+		arr = -1;
+		role = -1;
+		stmt = 2;
+		io = 1;	
+		add_info(type, "main", arr, role, stmt, io);
+
 		CompoundStmt(mainFunc->compoundStmt);
+
+		type = -1;
+		arr = -1;
+		role = -1;
+		stmt = 2;
+		io = 2;	
+		add_info(type, "main", arr, role, stmt, io);
+	}
 	return;
 }
 
@@ -162,6 +433,7 @@ void Param(struct Param *param) {
 		fprintf(ast, ", ");
 	}
 	if(param->type != NULL && param->ident != NULL) {
+		role = 1;
 		Type(param->type);
 		Ident(param->ident);
 	}
@@ -171,22 +443,37 @@ void Param(struct Param *param) {
 
 void Ident(struct Ident *ident) {
 	fprintf(ast, "%s ", ident->id);
-	if(ident->len > 0)
+	arr = 0;
+	if(ident->len > 0) {
+		arr = ident->len;
 		fprintf(ast, "[ %d ] ", ident->len);
+	}
+
+	stmt = -1;
+	io = -1;
+	add_info(type, ident->id, arr, role, stmt, io);
+
 	return;
 }
 
-void Type(struct Type *type) {
-	if(type->e == eInt)
+void Type(struct Type *ptype) {
+	if(ptype->e == eInt) {
+		type = 1;
 		fprintf(ast, "int ");
-	else if(type->e == eFloat)
+	}
+	else if(ptype->e == eFloat) {
+		type = 2;
 		fprintf(ast, "float ");
-	else if(type->e == eClass)
-		fprintf(ast, "%s ", type->id);
+	}
+	else if(ptype->e == eClass) {
+		type = 3;
+		fprintf(ast, "%s ", ptype->id);
+	}
 	return;
 }
 
 void CompoundStmt(struct CompoundStmt *compoundStmt) {
+	role = 2;
 	tab++;
 	fprintf(ast, "{\n");
 	if(compoundStmt->varDecl != NULL)
@@ -200,27 +487,42 @@ void CompoundStmt(struct CompoundStmt *compoundStmt) {
 	return;
 }
 
-void Stmt(struct Stmt *stmt) {
-	if(stmt->prev != NULL)
-		Stmt(stmt->prev);
+void Stmt(struct Stmt *pstmt) {
+	if(pstmt->prev != NULL)
+		Stmt(pstmt->prev);
 	
-	if(stmt->e == eExpr && stmt->type.exprStmt != NULL)
-		ExprStmt(stmt->type.exprStmt);
-	else if(stmt->e == eAssign && stmt->type.assignStmt != NULL)
-		AssignStmt(stmt->type.assignStmt);
-	else if(stmt->e == eRet && stmt->type.retStmt != NULL)
-		RetStmt(stmt->type.retStmt);
-	else if(stmt->e == eWhile && stmt->type.whileStmt != NULL)
-		WhileStmt(stmt->type.whileStmt);
-	else if(stmt->e == eDo && stmt->type.doStmt != NULL)
-		DoStmt(stmt->type.doStmt);	
-	else if(stmt->e == eFor && stmt->type.forStmt != NULL)
-		ForStmt(stmt->type.forStmt);
-	else if(stmt->e == eIf && stmt->type.ifStmt != NULL)
-		IfStmt(stmt->type.ifStmt);
-	else if(stmt->e == eCompound && stmt->type.compoundStmt != NULL)
-		CompoundStmt(stmt->type.compoundStmt);
-	else if(stmt->e == eSemi)
+	if(pstmt->e == eExpr && pstmt->type.exprStmt != NULL)
+		ExprStmt(pstmt->type.exprStmt);
+	else if(pstmt->e == eAssign && pstmt->type.assignStmt != NULL)
+		AssignStmt(pstmt->type.assignStmt);
+	else if(pstmt->e == eRet && pstmt->type.retStmt != NULL)
+		RetStmt(pstmt->type.retStmt);
+	else if(pstmt->e == eWhile && pstmt->type.whileStmt != NULL)
+		WhileStmt(pstmt->type.whileStmt);
+	else if(pstmt->e == eDo && pstmt->type.doStmt != NULL)
+		DoStmt(pstmt->type.doStmt);	
+	else if(pstmt->e == eFor && pstmt->type.forStmt != NULL)
+		ForStmt(pstmt->type.forStmt);
+	else if(pstmt->e == eIf && pstmt->type.ifStmt != NULL)
+		IfStmt(pstmt->type.ifStmt);
+	else if(pstmt->e == eCompound && pstmt->type.compoundStmt != NULL) {
+		type = -1;
+		arr = -1;
+		role = -1;
+		stmt = 6;
+		io = 1;	
+		add_info(type, "Compound", arr, role, stmt, io);
+
+		CompoundStmt(pstmt->type.compoundStmt);
+
+		type = -1;
+		arr = -1;
+		role = -1;
+		stmt = 6;
+		io = 2;	
+		add_info(type, "Compound", arr, role, stmt, io);
+	}
+	else if(pstmt->e == eSemi)
 		fprintf(ast, ";\n");
 	
 	return;
@@ -259,6 +561,13 @@ void RetStmt(struct RetStmt *retStmt) {
 }
 
 void WhileStmt(struct WhileStmt *whileStmt) {
+	type = -1;
+	arr = -1;
+	role = -1;
+	stmt = 3;
+	io = 1;	
+	add_info(type, "while", arr, role, stmt, io);
+
 	print_tab(tab);
 	fprintf(ast, "while ( ");
 	if(whileStmt->cond != NULL)
@@ -266,24 +575,51 @@ void WhileStmt(struct WhileStmt *whileStmt) {
 	fprintf(ast, ") ");
 	if(whileStmt->body != NULL)
 		Stmt(whileStmt->body);
-		
+	
+	type = -1;
+	arr = -1;
+	role = -1;
+	stmt = 3;
+	io = 2;	
+	add_info(type, "while", arr, role, stmt, io);	
 	return;
 }
 
 void DoStmt(struct DoStmt *doStmt) {
+	type = -1;
+	arr = -1;
+	role = -1;
+	stmt = 7;
+	io = 1;	
+	add_info(type, "do", arr, role, stmt, io);
+
 	print_tab(tab);
 	fprintf(ast, "do ");
 	if(doStmt->body != NULL)
 		Stmt(doStmt->body);
+	print_tab(tab);
 	fprintf(ast, "while ( ");
 	if(doStmt->cond != NULL)
 		Expr(doStmt->cond);
 	fprintf(ast, ") ;\n");
 		
+	type = -1;
+	arr = -1;
+	role = -1;
+	stmt = 7;
+	io = 2;	
+	add_info(type, "do", arr, role, stmt, io);
 	return;
 }
 
 void ForStmt(struct ForStmt *forStmt) {
+	type = -1;
+	arr = -1;
+	role = -1;
+	stmt = 4;
+	io = 1;	
+	add_info(type, "for", arr, role, stmt, io);
+
 	print_tab(tab);
 	fprintf(ast, "for ( ");
 	if(forStmt->init != NULL && forStmt->cond != NULL && forStmt->incr != NULL) {
@@ -292,14 +628,28 @@ void ForStmt(struct ForStmt *forStmt) {
 		Expr(forStmt->cond);
 		fprintf(ast, "; ");
 		Expr(forStmt->incr);
+		fprintf(ast, ") ");
 	}
 	if(forStmt->body != NULL)
 		Stmt(forStmt->body);
-		
+	
+	type = -1;
+	arr = -1;
+	role = -1;
+	stmt = 4;
+	io = 2;	
+	add_info(type, "for", arr, role, stmt, io);	
 	return;
 }
 
 void IfStmt(struct IfStmt *ifStmt) {
+	type = -1;
+	arr = -1;
+	role = -1;
+	stmt = 5;
+	io = 1;	
+	add_info(type, "if", arr, role, stmt, io);
+
 	print_tab(tab);
 	fprintf(ast, "if ( ");
 	if(ifStmt->cond != NULL)
@@ -313,6 +663,12 @@ void IfStmt(struct IfStmt *ifStmt) {
 		Stmt(ifStmt->elseBody);
 	}
 
+	type = -1;
+	arr = -1;
+	role = -1;
+	stmt = 5;
+	io = 2;	
+	add_info(type, "for", arr, role, stmt, io);
 	return;
 }
 

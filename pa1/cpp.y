@@ -455,7 +455,7 @@ Ident :		  ID {
 		| ID '[' INTNUM ']' {
 			struct Ident *ident = (struct Ident *)malloc(sizeof(struct Ident));
 			ident->id = $1;
-			ident->len = 3;
+			ident->len = $3;
 			$$ = ident;		
 		}
 		;
@@ -849,10 +849,10 @@ Arg :		  Expr {
 		}
 		;
 
-UnOp :		'-' OP_UN Expr {
+UnOp :		'-' Expr %prec OP_UN {
 			struct UnOp *unop = (struct UnOp *)malloc(sizeof(struct UnOp));
 			unop->e = eNegative;
-			unop->expr = $3;
+			unop->expr = $2;
 			$$ = unop;
 		}
 		;

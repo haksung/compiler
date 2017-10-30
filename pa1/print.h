@@ -6,10 +6,17 @@
 struct Program *head;
 
 struct table {
-	char	*loc;
+	int 	type;	// 1: Int, 2: Float, 3: Class
+	char 	*name;
+	int	arr;	// 0: -, 1~: Array_num
+	int	role;	// 1: Parameter, 2: Variable
+	int	stmt;	// 1: Class, 2: Function 3: While, 4: For, 5: If, 6: Compound, 7: Do
+	int	io;	// 1: In, 2: Out
 
-	
+	struct table *next;
 };
+
+struct table *t;
 
 void dfs(void);
 void Class(struct Class*);
